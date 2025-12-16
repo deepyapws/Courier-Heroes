@@ -1,0 +1,137 @@
+/* Custom styles for CourierTracker UI */
+body { padding-top: 40px; background: #f8f9fa; }
+.container { max-width: 900px; }
+.card { margin-top: 16px; }
+.spinner { display:inline-block; width:1.25rem; height:1.25rem; vertical-align:text-bottom }
+.result-json { white-space: pre-wrap; word-break: break-word; }
+.history-table td, .history-table th { vertical-align: middle }
+.courier-badge { font-size: 0.9rem }
+.note { color: #6c757d }
+
+/* Courier logo styling */
+.courier-logo { width: 28px; height: 28px; margin-right: 8px; vertical-align: middle; }
+.courier-logo-sm { width: 18px; height: 18px; margin-right: 6px; vertical-align: middle; }
+
+/* Hero card / modern top form */
+.hero-card { border: 0; border-radius: 12px; background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%); }
+.hero-card .card-body { padding: 18px; }
+.modern-input { border-radius: 999px; padding-right: 48px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.06); transition: box-shadow .15s ease, transform .06s ease; }
+.modern-input:focus { box-shadow: 0 6px 18px rgba(13,110,253,0.12); transform: translateY(-1px); outline: none; }
+.clear-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; font-size: 20px; line-height: 1; color: rgba(0,0,0,0.45); cursor: pointer; padding: 0 6px; }
+.clear-btn:hover { color: rgba(0,0,0,0.8); }
+.modern-track-btn { border-radius: 999px; padding-left: 18px; padding-right: 18px; box-shadow: 0 6px 18px rgba(13,110,253,0.08); }
+
+@media (max-width: 560px) {
+	.modern-input { font-size: 0.95rem; }
+	.clear-btn { right: 6px; }
+}
+
+/* badge styles inside hero header */
+/* removed tracked-list-link / badge styles when badge was removed */
+
+/* Status background colors for tracked list — pastel / light */
+#tracked-list .card.status-delivered { background-color: #dff0d8; border-color: #c3e6cb; }
+#tracked-list .card.status-error { background-color: #f8d7da; border-color: #f5c6cb; }
+#tracked-list .card.status-other { background-color: #fff3cd; border-color: #ffeeba; }
+
+/* Smooth background transitions for status changes */
+#tracked-list .card { transition: background-color .2s ease, border-color .2s ease; }
+
+/* Expand/collapse details inside tracked cards */
+#tracked-list .card { cursor: pointer; }
+#tracked-list .card .tracked-details { display: none; padding: 12px 16px; border-top: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.6); }
+#tracked-list .card.expanded { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+#tracked-list .card.expanded .tracked-details { display: block; }
+
+/* Prevent clickable inner buttons from showing pointer cursor via card */
+#tracked-list .card .btn { cursor: default; }
+
+/* Label badge */
+.tracked-label { display: inline-block; background: rgba(0,0,0,0.06); color: #212529; padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; margin-left: 8px; }
+.tracked-label.small { font-size: 0.75rem; padding: 2px 6px }
+
+/* Small compact controls beneath the tracked title */
+.tracked-controls .form-select {
+	min-width: 200px; /* wider so option labels fit */
+	max-width: 360px;
+	height: calc(1.6rem + 2px);
+	padding: 0.12rem 0.45rem;
+	font-size: 0.86rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.tracked-controls { display: flex; align-items: center; }
+
+@media (max-width: 560px) {
+	.tracked-controls .form-select { min-width: 140px; max-width: 220px; font-size: 0.8rem }
+}
+
+/* --- Checking animation styles --- */
+.card.checking {
+	position: relative;
+	opacity: 0.98;
+	box-shadow: 0 0 0 3px rgba(13,110,253,0.06);
+	transition: box-shadow .2s ease, opacity .2s ease;
+}
+
+.card .spinner-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255,255,255,0.6);
+	z-index: 10;
+}
+
+/* Slightly dim card content when checking to indicate in-progress */
+.card.checking { opacity: 0.96; }
+
+@keyframes flash-success {
+	0% { background-color: rgba(40,167,69,0.12); }
+	100% { background-color: transparent; }
+}
+.card.checked-success {
+	animation: flash-success 1s ease forwards;
+}
+
+/* subtle highlight for newly added items */
+.added-highlight { box-shadow: 0 6px 20px rgba(13,110,253,0.12); transform: translateY(-2px); transition: box-shadow .25s ease, transform .18s ease; }
+.alert.fade-out { opacity: 0; }
+
+/* Inline add controls in result card */
+.add-inline-label { width: 220px; max-width: 60%; }
+.btn-add-inline { white-space: nowrap; }
+@media (max-width: 560px) { .add-inline-label { max-width: 100%; width: 100%; } }
+
+/* style for the 'update' button (now inline) */
+#update-all-btn { border-radius: 999px; }
+#update-all-btn[disabled] { opacity: 0.7; }
+@media (max-width: 560px) { #update-all-btn { display: inline-block; } }
+
+/* Make the update button stick to the far right of tracked-controls */
+.tracked-controls { position: relative; padding-right: 120px; }
+.tracked-update-wrapper { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 2; }
+@media (max-width: 560px) {
+	.tracked-controls { padding-right: 0; }
+	.tracked-update-wrapper { position: static; transform: none; margin-left: 8px; }
+}
+
+/* New plain gray X remove button */
+.btn-delete-x {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0 8px;
+  cursor: pointer;
+  transition: color 0.15s;
+  vertical-align: middle;
+}
+.btn-delete-x:hover, .btn-delete-x:focus {
+  color: #333;
+  background: none;
+  outline: none;
+}
