@@ -111,12 +111,13 @@ def api_add_tracked() -> Response:
     payload = request.get_json() or request.form
     tracking = payload.get('tracking')
     label = payload.get('label')
+    courier = payload.get('courier')
     if not tracking:
         return jsonify({'error': 'Missing tracking field'}), 400
-    rowid = db.add_tracked(tracking, label=label)
+    rowid = db.add_tracked(tracking, courier=courier, label=label)
     if rowid is None:
         return jsonify({'error': 'Already exists'}), 409
-    return jsonify({'id': rowid, 'tracking': tracking, 'label': label})
+    return jsonify({'id': rowid, 'tracking': tracking, 'courier': courier, 'label': label})
 
 
 
@@ -158,9 +159,9 @@ def api_check_tracked(item_id) -> Response:
 def api_check_all() -> Response:
     from datetime import datetime
     items = db.list_tracked()
-    tracking_numbers = [i['tracking'] for i in items]
+    tracking_items = [{"tracking": i["tracking"], "courier": i.get("courier")} for i in items]
     try:
-        results = asyncio.run(unified.track_many_async(tracking_numbers))
+        results = asyncio.run(unified.track_many_async(tracking_items))
     except Exception as e:
         tb = traceback.format_exc()
         logger.exception('Batch tracking failed')

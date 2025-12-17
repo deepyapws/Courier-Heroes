@@ -1,21 +1,24 @@
 # Async batch tracker for concurrent updates
-async def track_many_async(tracking_numbers, debug=False):
+async def track_many_async(tracking_items, debug=False):
     tasks = []
-    for invc in tracking_numbers:
-        invc = invc.strip()
-        # Dispatch to the correct async tracker based on number format
-        if re.match(r"^\d{12}$", invc):
+    for item in tracking_items:
+        if isinstance(item, dict):
+            invc = item.get('tracking', '').strip()
+            courier = (item.get('courier') or '').lower()
+        else:
+            invc = str(item).strip()
+            courier = ''
+        if courier == 'cj logistics' or courier == 'cj대한통운' or courier == 'cj':
             tasks.append(track_cj_async(invc, debug=debug))
-        elif re.match(r"^\d{11}$", invc):
+        elif courier == 'cupost' or courier == 'cu post' or courier == 'cu':
             tasks.append(track_cu_async(invc, debug=debug))
-        elif re.match(r"^\d{13}$", invc):
-            # Korea Post is not async yet, fallback to sync in thread
+        elif courier == 'hanjin' or courier == '한진택배':
+            tasks.append(track_hanjin_async(invc, debug=debug))
+        elif courier == 'korea post' or courier == '우체국':
             import asyncio
             loop = asyncio.get_running_loop()
             from functools import partial
             tasks.append(loop.run_in_executor(None, track_koreapost, invc, debug))
-        elif re.match(r"^\d{10}$", invc):
-            tasks.append(track_hanjin_async(invc, debug=debug))
         else:
             # fallback to sync for unknowns
             import asyncio
@@ -24,6 +27,8 @@ async def track_many_async(tracking_numbers, debug=False):
             tasks.append(loop.run_in_executor(None, track, invc, debug))
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return results
+
+
 import requests
 import httpx
 import asyncio
