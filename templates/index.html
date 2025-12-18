@@ -23,9 +23,17 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarMenu">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <!-- Example menu item, add more as needed -->
-            <li class="nav-item">
-              <a class="nav-link disabled" href="#">Menu</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle btn btn-outline-secondary btn-sm ms-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-width:2.5em;text-align:center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                  <path fill-rule="evenodd" d="M8 9a5 5 0 0 0-5 5v.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V14a5 5 0 0 0-5-5z"/>
+                </svg>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" id="user-dropdown-list">
+                <!-- User options will be populated by JS -->
+                <li><a class="dropdown-item" href="#" id="add-new-user">Add or Change User…</a></li>
+              </ul>
             </li>
           </ul>
         </div>

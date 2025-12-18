@@ -47,7 +47,8 @@ def init_db() -> None:
         """
         CREATE TABLE IF NOT EXISTS tracked (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tracking TEXT NOT NULL UNIQUE,
+            user_id TEXT NOT NULL,
+            tracking TEXT NOT NULL,
             courier TEXT,
             label TEXT,
             last_result TEXT,
@@ -56,9 +57,9 @@ def init_db() -> None:
         )
         """
     )
-    # If the column 'courier' or 'label' was added after table creation in older DBs,
+    # If the column 'user_id', 'courier', or 'label' was added after table creation in older DBs,
     # ensure they exist (SQLite ignores ADD COLUMN if exists, so we guard)
-    for col in ["courier", "label"]:
+    for col in ["user_id", "courier", "label"]:
         try:
             c.execute(f"SELECT {col} FROM tracked LIMIT 1")
         except sqlite3.OperationalError:
@@ -66,15 +67,14 @@ def init_db() -> None:
     conn.commit()
     conn.close()
 
-def list_tracked():
+def list_tracked(user_id):
     conn: sqlite3.Connection = get_conn()
     c: sqlite3.Cursor = conn.cursor()
-    c.execute("SELECT id, tracking, courier, label, last_result, last_checked, created_at FROM tracked ORDER BY id DESC")
+    c.execute("SELECT id, tracking, courier, label, last_result, last_checked, created_at FROM tracked WHERE user_id = ? ORDER BY id DESC", (user_id,))
     rows = c.fetchall()
     conn.close()
     out = []
     for r in rows:
-        # r indices: 0=id,1=tracking,2=courier,3=label,4=last_result,5=last_checked,6=created_at
         courier = r[2]
         label = r[3]
         lr_raw = r[4]
@@ -93,20 +93,19 @@ def list_tracked():
         })
     return out
 
-def add_tracked(tracking, courier=None, label=None) -> int | None:
+def add_tracked(user_id, tracking, courier=None, label=None) -> int | None:
     conn: sqlite3.Connection = get_conn()
     c: sqlite3.Cursor = conn.cursor()
     now: str = datetime.utcnow().isoformat()
     std_courier = standardize_courier_name(courier)
     try:
         c.execute(
-            "INSERT INTO tracked (tracking, courier, label, created_at) VALUES (?, ?, ?, ?)",
-            (tracking, std_courier, label, now)
+            "INSERT INTO tracked (user_id, tracking, courier, label, created_at) VALUES (?, ?, ?, ?, ?)",
+            (user_id, tracking, std_courier, label, now)
         )
         conn.commit()
         rowid: int | None = c.lastrowid
     except sqlite3.IntegrityError:
-        # already exists
         rowid = None
     conn.close()
     return rowid
@@ -121,19 +120,19 @@ def update_tracked_courier(item_id, courier) -> bool:
     return updated > 0
 
 
-def update_tracked_label(item_id, label) -> bool:
+def update_tracked_label(user_id, item_id, label) -> bool:
     conn: sqlite3.Connection = get_conn()
     c: sqlite3.Cursor = conn.cursor()
-    c.execute("UPDATE tracked SET label=? WHERE id=?", (label, item_id))
+    c.execute("UPDATE tracked SET label=? WHERE id=? AND user_id=?", (label, item_id, user_id))
     conn.commit()
     updated: int = c.rowcount
     conn.close()
     return updated > 0
 
-def remove_tracked(item_id) -> bool:
+def remove_tracked(user_id, item_id) -> bool:
     conn: sqlite3.Connection = get_conn()
     c: sqlite3.Cursor = conn.cursor()
-    c.execute("DELETE FROM tracked WHERE id=?", (item_id,))
+    c.execute("DELETE FROM tracked WHERE id=? AND user_id=?", (item_id, user_id))
     conn.commit()
     deleted: int = c.rowcount
     conn.close()

@@ -1,7 +1,76 @@
 document.addEventListener('DOMContentLoaded', function () {
+  // Simple authentication: prompt for user ID if not set
+  function getUserId() {
+    let userId = localStorage.getItem('user_id');
+    if (!userId) {
+      userId = prompt('Enter your user ID (for demo, any string):');
+      if (userId) localStorage.setItem('user_id', userId);
+    }
+    return userId;
+  }
+  const USER_ID = getUserId();
   const form = document.getElementById('track-form');
   const invInput = document.getElementById('tracking-number');
   const resultDiv = document.getElementById('result');
+
+  // User dropdown logic
+  const userDropdownList = document.getElementById('user-dropdown-list');
+  const addNewUserItem = document.getElementById('add-new-user');
+  // Maintain a list of recent user IDs in localStorage
+  function getRecentUserIds() {
+    let ids = [];
+    try {
+      ids = JSON.parse(localStorage.getItem('recent_user_ids') || '[]');
+    } catch {}
+    return Array.isArray(ids) ? ids : [];
+  }
+  function setRecentUserIds(ids) {
+    localStorage.setItem('recent_user_ids', JSON.stringify(ids.slice(0, 6)));
+  }
+  function addRecentUserId(id) {
+    let ids = getRecentUserIds();
+    ids = [id, ...ids.filter(x => x !== id)];
+    setRecentUserIds(ids);
+  }
+  addRecentUserId(USER_ID);
+
+  function renderUserDropdown() {
+    if (!userDropdownList) return;
+    // Remove all except the last item (add/change)
+    while (userDropdownList.children.length > 1) {
+      userDropdownList.removeChild(userDropdownList.firstChild);
+    }
+    const ids = getRecentUserIds();
+    ids.forEach(id => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.className = 'dropdown-item';
+      a.href = '#';
+      a.textContent = id === USER_ID ? id + ' (current)' : id;
+      if (id === USER_ID) a.style.fontWeight = 'bold';
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (id !== USER_ID) {
+          localStorage.setItem('user_id', id);
+          location.reload();
+        }
+      });
+      li.appendChild(a);
+      userDropdownList.insertBefore(li, userDropdownList.lastElementChild);
+    });
+  }
+  renderUserDropdown();
+  if (addNewUserItem) {
+    addNewUserItem.addEventListener('click', function(e) {
+      e.preventDefault();
+      const newUserId = prompt('Enter a new user ID:');
+      if (newUserId) {
+        localStorage.setItem('user_id', newUserId);
+        addRecentUserId(newUserId);
+        location.reload();
+      }
+    });
+  }
 
   // map courier name (human) to a small image file key
   function courierKey(name) {
@@ -123,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const labelEl = resultDiv.querySelector('.add-inline-label');
         const label = labelEl ? (labelEl.value || '').trim() : '';
         try {
-          const r = await fetch('/api/tracked', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ tracking: tracking, label: label }) });
+          const r = await fetch('/api/tracked', { method: 'POST', headers: {'Content-Type':'application/json', 'X-User-Id': USER_ID}, body: JSON.stringify({ tracking: tracking, label: label }) });
           const d = await r.json().catch(()=>({}));
           if (r.status === 200 || r.status === 201) {
             showAddMessage('Added to watchlist', 'success');
@@ -213,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (searchVal) q.push(`q=${encodeURIComponent(searchVal)}`);
     if (q.length) url += '?' + q.join('&');
 
-    const r = await fetch(url, { cache: 'no-store' });
+    const r = await fetch(url, { cache: 'no-store', headers: { 'X-User-Id': USER_ID } });
     const data = await r.json();
     const items = data.items || [];
     // no header badge — nothing to update; wrapper will show items
@@ -301,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function () {
               await Promise.all(toUpdate.map(async (card) => {
                 const id = card.getAttribute('data-id');
                 try {
-                  const r = await fetch(`/api/tracked/${id}/check`, { method: 'POST', cache: 'no-store' });
+                  const r = await fetch(`/api/tracked/${id}/check`, { method: 'POST', cache: 'no-store', headers: { 'X-User-Id': USER_ID } });
                   const data = await r.json().catch(()=>({}));
                   // update last-checked small text
                   const small = card.querySelector('small.text-muted');
@@ -471,7 +540,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         e.target.disabled = true;
         try {
-          await fetch(`/api/tracked/${id}/check`, { method: 'POST' });
+          await fetch(`/api/tracked/${id}/check`, { method: 'POST', headers: { 'X-User-Id': USER_ID } });
           // success flash
           card.classList.add('checked-success');
           setTimeout(()=> card.classList.remove('checked-success'), 1000);
@@ -495,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const card = e.target.closest('.card');
         const id = card.getAttribute('data-id');
         if (!confirm('Remove tracking '+card.querySelector('strong').innerText+'?')) return;
-        await fetch(`/api/tracked/${id}`, { method: 'DELETE' });
+        await fetch(`/api/tracked/${id}`, { method: 'DELETE', headers: { 'X-User-Id': USER_ID } });
         renderTrackedList();
       });
     });
@@ -526,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         saveBtn.addEventListener('click', async () => {
           const newLabel = input.value.trim();
-          const r = await fetch(`/api/tracked/${id}/label`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ label: newLabel }) });
+          const r = await fetch(`/api/tracked/${id}/label`, { method: 'POST', headers: {'Content-Type':'application/json', 'X-User-Id': USER_ID}, body: JSON.stringify({ label: newLabel }) });
           if (r.ok) renderTrackedList(); else alert('Failed to save label');
         });
         cancelBtn.addEventListener('click', () => renderTrackedList());
